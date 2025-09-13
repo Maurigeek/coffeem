@@ -11,11 +11,12 @@ import {
   SheetTitle,
   SheetTrigger,
 } from '@/components/ui/sheet';
+import { useCartCount } from '@/lib/hooks/useCart';
 
 export default function Header() {
   const [location] = useLocation();
   const [searchQuery, setSearchQuery] = useState('');
-  const [cartCount] = useState(2); // todo: remove mock functionality
+  const { data: cartCount = 0 } = useCartCount();
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
 
   const navigation = [

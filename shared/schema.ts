@@ -1,71 +1,79 @@
-import { sql } from "drizzle-orm";
-import { pgTable, text, varchar, integer, decimal } from "drizzle-orm/pg-core";
-import { createInsertSchema } from "drizzle-zod";
 import { z } from "zod";
 
-export const users = pgTable("users", {
-  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
-  username: text("username").notNull().unique(),
-  password: text("password").notNull(),
+// Types pour le frontend uniquement
+export interface Product {
+  id: string;
+  name: string;
+  description: string;
+  price: number;
+  image: string;
+  category: string;
+  features: string[];
+  inStock: number;
+  featured: boolean;
+  rating?: number;
+  reviewCount?: number;
+  originalPrice?: number;
+  specifications?: Record<string, string>;
+}
+
+export interface CartItem {
+  id: string;
+  productId: string;
+  quantity: number;
+  product?: Product;
+}
+
+export interface Order {
+  id: string;
+  items: CartItem[];
+  total: number;
+  status: string;
+  shippingAddress: string;
+  billingAddress: string;
+  createdAt: string;
+}
+
+export interface User {
+  id: string;
+  username: string;
+  email?: string;
+}
+
+// Schemas de validation Zod
+export const productSchema = z.object({
+  id: z.string(),
+  name: z.string().min(1),
+  description: z.string().min(1),
+  price: z.number().positive(),
+  image: z.string().url(),
+  category: z.string().min(1),
+  features: z.array(z.string()),
+  inStock: z.number().int().min(0),
+  featured: z.boolean(),
+  rating: z.number().min(0).max(5).optional(),
+  reviewCount: z.number().int().min(0).optional(),
+  originalPrice: z.number().positive().optional(),
+  specifications: z.record(z.string()).optional(),
 });
 
-export const products = pgTable("products", {
-  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
-  name: text("name").notNull(),
-  description: text("description").notNull(),
-  price: decimal("price", { precision: 10, scale: 2 }).notNull(),
-  image: text("image").notNull(),
-  category: text("category").notNull(),
-  features: text("features").array().notNull(),
-  inStock: integer("in_stock").notNull().default(0),
-  featured: integer("featured").notNull().default(0), // 0 = false, 1 = true
+export const cartItemSchema = z.object({
+  id: z.string(),
+  productId: z.string(),
+  quantity: z.number().int().positive(),
+  product: productSchema.optional(),
 });
 
-export const cartItems = pgTable("cart_items", {
-  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
-  productId: varchar("product_id").notNull().references(() => products.id),
-  quantity: integer("quantity").notNull().default(1),
-  userId: varchar("user_id").references(() => users.id),
+export const orderSchema = z.object({
+  id: z.string(),
+  items: z.array(cartItemSchema),
+  total: z.number().positive(),
+  status: z.string(),
+  shippingAddress: z.string().min(1),
+  billingAddress: z.string().min(1),
+  createdAt: z.string(),
 });
 
-export const orders = pgTable("orders", {
-  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
-  userId: varchar("user_id").references(() => users.id),
-  total: decimal("total", { precision: 10, scale: 2 }).notNull(),
-  status: text("status").notNull().default("pending"),
-  shippingAddress: text("shipping_address").notNull(),
-  billingAddress: text("billing_address").notNull(),
-  createdAt: text("created_at").notNull().default(sql`CURRENT_TIMESTAMP`),
-});
-
-// Schemas for validation
-export const insertUserSchema = createInsertSchema(users).pick({
-  username: true,
-  password: true,
-});
-
-export const insertProductSchema = createInsertSchema(products).omit({
-  id: true,
-});
-
-export const insertCartItemSchema = createInsertSchema(cartItems).omit({
-  id: true,
-});
-
-export const insertOrderSchema = createInsertSchema(orders).omit({
-  id: true,
-  createdAt: true,
-});
-
-// Types
-export type InsertUser = z.infer<typeof insertUserSchema>;
-export type User = typeof users.$inferSelect;
-
-export type InsertProduct = z.infer<typeof insertProductSchema>;
-export type Product = typeof products.$inferSelect;
-
-export type InsertCartItem = z.infer<typeof insertCartItemSchema>;
-export type CartItem = typeof cartItems.$inferSelect;
-
-export type InsertOrder = z.infer<typeof insertOrderSchema>;
-export type Order = typeof orders.$inferSelect;
+export type InsertProduct = z.infer<typeof productSchema>;
+export type InsertCartItem = Omit<z.infer<typeof cartItemSchema>, 'id'>;
+export type InsertOrder = Omit<z.infer<typeof orderSchema>, 'id' | 'createdAt'>;
