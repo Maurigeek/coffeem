@@ -11,7 +11,7 @@ console.log('🚀 Starting Vite development server...');
 console.log(`📁 Working directory: ${__dirname}`);
 
 // Start Vite development server from root directory with config
-const viteProcess = spawn('npx', ['vite', 'dev', '--host', '0.0.0.0', '--port', '5000', '--config', 'vite.config.ts'], {
+const viteProcess = spawn('npx', ['vite', 'dev', '--config', 'vite.dev.config.ts'], {
   cwd: __dirname,
   stdio: 'inherit',
   shell: true
