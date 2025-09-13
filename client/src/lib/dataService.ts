@@ -15,6 +15,11 @@ class DataService {
   }
 
   private initializeData() {
+    // Guard against non-browser environments
+    if (typeof window === 'undefined' || !('localStorage' in window)) {
+      return;
+    }
+
     // Initialise les produits s'ils n'existent pas
     if (!localStorage.getItem(this.storageKeys.products)) {
       localStorage.setItem(this.storageKeys.products, JSON.stringify(mockProducts));
@@ -39,6 +44,31 @@ class DataService {
   // Simule une latence réseau
   private delay(ms: number = 300): Promise<void> {
     return new Promise(resolve => setTimeout(resolve, ms));
+  }
+
+  // Helper sécurisé pour localStorage
+  private getFromStorage(key: string, fallback: any = null): any {
+    if (typeof window === 'undefined' || !('localStorage' in window)) {
+      return fallback;
+    }
+    try {
+      const item = localStorage.getItem(key);
+      return item ? JSON.parse(item) : fallback;
+    } catch (error) {
+      console.warn(`Erreur lors de la lecture de ${key} depuis localStorage:`, error);
+      return fallback;
+    }
+  }
+
+  private setToStorage(key: string, value: any): void {
+    if (typeof window === 'undefined' || !('localStorage' in window)) {
+      return;
+    }
+    try {
+      localStorage.setItem(key, JSON.stringify(value));
+    } catch (error) {
+      console.warn(`Erreur lors de l'écriture de ${key} dans localStorage:`, error);
+    }
   }
 
   // PRODUITS
