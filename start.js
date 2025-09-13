@@ -3,17 +3,16 @@
 // Simple script to start the frontend Vite development server
 import { spawn } from 'child_process';
 import { fileURLToPath } from 'url';
-import { dirname, join } from 'path';
+import { dirname } from 'path';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
-const clientDir = join(__dirname, 'client');
 
 console.log('🚀 Starting Vite development server...');
-console.log(`📁 Client directory: ${clientDir}`);
+console.log(`📁 Working directory: ${__dirname}`);
 
-// Start Vite development server
-const viteProcess = spawn('npx', ['vite', 'dev', '--host', '0.0.0.0', '--port', '5000'], {
-  cwd: clientDir,
+// Start Vite development server from root directory with config
+const viteProcess = spawn('npx', ['vite', 'dev', '--host', '0.0.0.0', '--port', '5000', '--config', 'vite.config.ts'], {
+  cwd: __dirname,
   stdio: 'inherit',
   shell: true
 });
