@@ -3,11 +3,15 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardFooter } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Heart, ShoppingCart, Eye } from 'lucide-react';
+import { useAddToCart } from '@/lib/hooks/useCart';
+import { useLocation } from 'wouter';
 
 interface ProductCardProps {
   id: string;
+  slug: string;
   name: string;
   price: number;
+  originalPrice: number;
   image: string;
   category: string;
   features: string[];
@@ -20,8 +24,10 @@ interface ProductCardProps {
 
 export default function ProductCard({
   id,
+  slug,
   name,
   price,
+  originalPrice,
   image,
   category,
   features,
@@ -33,29 +39,32 @@ export default function ProductCard({
 }: ProductCardProps) {
   const [isHovered, setIsHovered] = useState(false);
   const [isFavorite, setIsFavorite] = useState(false);
+  const { mutate: addToCart } = useAddToCart();
+  const [, navigate] = useLocation();
+
 
   const handleAddToCart = () => {
+    addToCart({ productId: id, quantity: 1 }
+      // { onSuccess: () => {
+      //   navigate('/cart'); 
+      //   window.scrollTo({ top: 0, behavior: 'smooth' })} }
+      );
     onAddToCart?.(id);
-    console.log(`Produit ${id} ajouté au panier`);
+    
   };
 
   const handleToggleFavorite = () => {
     setIsFavorite(!isFavorite);
     onToggleFavorite?.(id);
-    console.log(`Produit ${id} ${!isFavorite ? 'ajouté aux' : 'retiré des'} favoris`);
   };
 
   const handleQuickView = () => {
-    onQuickView?.(id);
-    console.log(`Aperçu rapide du produit ${id}`);
+    // onQuickView?.(id);
+    navigate(`/product/${slug}`);
   };
 
-  const formatPrice = (price: number) => {
-    return new Intl.NumberFormat('fr-FR', {
-      style: 'currency',
-      currency: 'EUR',
-    }).format(price);
-  };
+  const formatPrice = (price: number) =>
+    new Intl.NumberFormat('fr-FR', { style: 'currency', currency: 'EUR' }).format(price);
 
   return (
     <Card
@@ -66,16 +75,15 @@ export default function ProductCard({
       onMouseLeave={() => setIsHovered(false)}
       data-testid={`card-product-${id}`}
     >
-      <div className="relative aspect-square overflow-hidden">
-        {/* Product Image */}
+      <div className="relative w-full overflow-hidden rounded-lg" style={{ aspectRatio: '1 / 1' }}>
         <img
           src={image}
           alt={name}
-          className={`w-full h-full object-cover transition-transform duration-500 ${
+          className={`absolute inset-0 w-full h-full object-cover transition-transform duration-500 ${
             isHovered ? 'scale-110' : 'scale-100'
           }`}
-        />
-        
+      />
+
         {/* Badges */}
         <div className="absolute top-3 left-3 flex flex-col gap-2">
           {featured && (
@@ -91,9 +99,11 @@ export default function ProductCard({
         </div>
 
         {/* Action Buttons - Appear on Hover */}
-        <div className={`absolute top-3 right-3 flex flex-col gap-2 transition-opacity duration-300 ${
-          isHovered ? 'opacity-100' : 'opacity-0'
-        }`}>
+        <div
+          className={`absolute top-3 right-3 flex flex-col gap-2 transition-opacity duration-300 ${
+            isHovered ? 'opacity-100' : 'opacity-0'
+          }`}
+        >
           <Button
             size="icon"
             variant="secondary"
@@ -101,13 +111,9 @@ export default function ProductCard({
             onClick={handleToggleFavorite}
             data-testid={`button-favorite-${id}`}
           >
-            <Heart
-              className={`h-4 w-4 ${
-                isFavorite ? 'fill-red-500 text-red-500' : 'text-gray-600'
-              }`}
-            />
+            <Heart className={`h-4 w-4 ${isFavorite ? 'fill-red-500 text-red-500' : 'text-gray-600'}`} />
           </Button>
-          
+
           <Button
             size="icon"
             variant="secondary"
@@ -120,9 +126,11 @@ export default function ProductCard({
         </div>
 
         {/* Quick Add to Cart - Bottom Overlay */}
-        <div className={`absolute inset-x-0 bottom-0 p-4 bg-gradient-to-t from-black/60 to-transparent transition-opacity duration-300 ${
-          isHovered ? 'opacity-100' : 'opacity-0'
-        }`}>
+        <div
+          className={`absolute inset-x-0 bottom-0 p-4 bg-gradient-to-t from-black/60 to-transparent transition-opacity duration-300 ${
+            isHovered ? 'opacity-100' : 'opacity-0'
+          }`}
+        >
           <Button
             className="w-full bg-white text-black hover:bg-gray-100"
             onClick={handleAddToCart}
@@ -141,22 +149,30 @@ export default function ProductCard({
             {category}
           </Badge>
         </div>
-        
+
         <h3 className="font-serif text-lg font-semibold mb-2 line-clamp-2" data-testid={`text-name-${id}`}>
           {name}
         </h3>
-        
+
         <div className="flex items-center justify-between mb-3">
           <span className="text-2xl font-bold text-primary" data-testid={`text-price-${id}`}>
             {formatPrice(price)}
           </span>
+          {originalPrice && (
+                        <>
+                          <span className="text-lg text-muted-foreground line-through">
+                            {formatPrice(originalPrice)}
+                          </span>
+                          <Badge variant="destructive" className="text-xs">
+                            -{Math.round((1 - price / originalPrice) * 100)}%
+                          </Badge>
+                        </>
+                      )}
           {inStock > 0 && inStock <= 5 && (
-            <span className="text-xs text-orange-600 font-medium">
-              Plus que {inStock} en stock
-            </span>
+            <span className="text-xs text-orange-600 font-medium">Plus que {inStock} en stock</span>
           )}
         </div>
-        
+
         <div className="space-y-1">
           {features.slice(0, 2).map((feature, index) => (
             <div key={index} className="flex items-center text-sm text-muted-foreground">
@@ -165,9 +181,7 @@ export default function ProductCard({
             </div>
           ))}
           {features.length > 2 && (
-            <div className="text-sm text-muted-foreground">
-              +{features.length - 2} autres caractéristiques
-            </div>
+            <div className="text-sm text-muted-foreground">+{features.length - 2} autres caractéristiques</div>
           )}
         </div>
       </CardContent>

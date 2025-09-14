@@ -4,9 +4,12 @@ import { z } from "zod";
 export interface Product {
   id: string;
   name: string;
+  slug:string;
   description: string;
   price: number;
   image: string;
+  images?: string[];
+  media360?: string[];
   category: string;
   features: string[];
   inStock: number;

@@ -1,77 +1,89 @@
+// client/src/lib/dataService.ts
 import { Product, CartItem, Order } from '@shared/schema';
 import { mockProducts } from './mockData';
 
+const STORAGE = {
+  version: 'coffee_shop_version',
+  products: 'coffee_shop_products',
+  cart: 'coffee_shop_cart',
+  orders: 'coffee_shop_orders',
+  favorites: 'coffee_shop_favorites',
+};
+
+// ⚠️ Incrémente la version quand tu modifies la structure/contenu des produits
+const DATA_VERSION = 'v2';
+
+function safeParse<T>(raw: string | null, fallback: T): T {
+  try { return raw ? (JSON.parse(raw) as T) : fallback; } catch { return fallback; }
+}
+
+function nowId(prefix: string) {
+  // crypto.randomUUID n’est pas dispo partout -> fallback
+  // @ts-ignore
+  return (typeof crypto !== 'undefined' && crypto.randomUUID)
+    // @ts-ignore
+    ? crypto.randomUUID()
+    : `${prefix}_${Date.now()}_${Math.random().toString(36).slice(2, 9)}`;
+}
+
+// Normalise les chemins d’images hérités des anciens dumps (attached_assets, /@fs/…)
+function fixPath(x: string | undefined | null): string | undefined | null {
+  if (!x) return x;
+  if (x.includes('attached_assets') || x.includes('/@fs/')) {
+    const justFile = x.split('/').pop()!;
+    return `/${justFile}`; // sert depuis client/public/justFile
+  }
+  return x;
+}
+
 // Service qui simule une API backend avec localStorage
 class DataService {
-  private storageKeys = {
-    products: 'coffee_shop_products',
-    cart: 'coffee_shop_cart',
-    orders: 'coffee_shop_orders',
-    favorites: 'coffee_shop_favorites',
-  };
-
   constructor() {
     this.initializeData();
   }
 
   private initializeData() {
-    // Guard against non-browser environments
-    if (typeof window === 'undefined' || !('localStorage' in window)) {
-      return;
+    if (typeof window === 'undefined' || !('localStorage' in window)) return;
+
+    const currentVersion = localStorage.getItem(STORAGE.version);
+
+    // 1) Si version différente → réinjecte les produits “propres”
+    if (currentVersion !== DATA_VERSION) {
+      localStorage.removeItem(STORAGE.products);
+      localStorage.setItem(STORAGE.version, DATA_VERSION);
     }
 
-    // Initialise les produits s'ils n'existent pas
-    if (!localStorage.getItem(this.storageKeys.products)) {
-      localStorage.setItem(this.storageKeys.products, JSON.stringify(mockProducts));
+    // 2) S’il n’y a pas de produits → injecte mockProducts (avec chemins /public)
+    if (!localStorage.getItem(STORAGE.products)) {
+      const normalized = (mockProducts || []).map((p: any) => ({
+        ...p,
+        image: fixPath(p.image) ?? p.image,
+        images: Array.isArray(p.images) ? p.images.map((i: string) => fixPath(i) ?? i) : [],
+      }));
+      localStorage.setItem(STORAGE.products, JSON.stringify(normalized));
+    } else {
+      // 3) Migration douce : corrige les chemins hérités
+      const prod = safeParse<any[]>(localStorage.getItem(STORAGE.products), []);
+      const migrated = prod.map((p) => ({
+        ...p,
+        image: fixPath(p.image) ?? p.image,
+        images: Array.isArray(p.images) ? p.images.map((i: string) => fixPath(i) ?? i) : [],
+      }));
+      localStorage.setItem(STORAGE.products, JSON.stringify(migrated));
     }
 
-    // Initialise le panier vide s'il n'existe pas
-    if (!localStorage.getItem(this.storageKeys.cart)) {
-      localStorage.setItem(this.storageKeys.cart, JSON.stringify([]));
-    }
-
-    // Initialise les commandes vides si elles n'existent pas
-    if (!localStorage.getItem(this.storageKeys.orders)) {
-      localStorage.setItem(this.storageKeys.orders, JSON.stringify([]));
-    }
-
-    // Initialise les favoris vides s'ils n'existent pas
-    if (!localStorage.getItem(this.storageKeys.favorites)) {
-      localStorage.setItem(this.storageKeys.favorites, JSON.stringify([]));
+    // 4) Initialise les autres clés si absentes
+    for (const key of [STORAGE.cart, STORAGE.orders, STORAGE.favorites]) {
+      if (!localStorage.getItem(key)) localStorage.setItem(key, JSON.stringify([]));
     }
   }
 
   // Simule une latence réseau
-  private delay(ms: number = 300): Promise<void> {
-    return new Promise(resolve => setTimeout(resolve, ms));
+  private delay(ms: number = 150): Promise<void> {
+    return new Promise((resolve) => setTimeout(resolve, ms));
   }
 
-  // Helper sécurisé pour localStorage
-  private getFromStorage(key: string, fallback: any = null): any {
-    if (typeof window === 'undefined' || !('localStorage' in window)) {
-      return fallback;
-    }
-    try {
-      const item = localStorage.getItem(key);
-      return item ? JSON.parse(item) : fallback;
-    } catch (error) {
-      console.warn(`Erreur lors de la lecture de ${key} depuis localStorage:`, error);
-      return fallback;
-    }
-  }
-
-  private setToStorage(key: string, value: any): void {
-    if (typeof window === 'undefined' || !('localStorage' in window)) {
-      return;
-    }
-    try {
-      localStorage.setItem(key, JSON.stringify(value));
-    } catch (error) {
-      console.warn(`Erreur lors de l'écriture de ${key} dans localStorage:`, error);
-    }
-  }
-
-  // PRODUITS
+  // ========== PRODUITS ==========
   async getProducts(filters?: {
     search?: string;
     category?: string;
@@ -80,224 +92,248 @@ class DataService {
     featured?: boolean;
   }): Promise<Product[]> {
     await this.delay();
-    
-    const products = JSON.parse(localStorage.getItem(this.storageKeys.products) || '[]') as Product[];
-    
+    const products = safeParse<Product[]>(localStorage.getItem(STORAGE.products), []);
+
     if (!filters) return products;
 
-    return products.filter(product => {
-      if (filters.search) {
-        const searchTerm = filters.search.toLowerCase();
-        if (!product.name.toLowerCase().includes(searchTerm) &&
-            !product.category.toLowerCase().includes(searchTerm) &&
-            !product.description.toLowerCase().includes(searchTerm)) {
-          return false;
-        }
+    const searchTerm = (filters.search || '').toLowerCase();
+
+    return products.filter((product) => {
+      if (searchTerm) {
+        const hay = `${product.name} ${product.category} ${product.description}`.toLowerCase();
+        if (!hay.includes(searchTerm)) return false;
       }
-
       if (filters.category && product.category !== filters.category) return false;
-      if (filters.minPrice && product.price < filters.minPrice) return false;
-      if (filters.maxPrice && product.price > filters.maxPrice) return false;
-      if (filters.featured !== undefined && product.featured !== filters.featured) return false;
-
+      if (typeof filters.minPrice === 'number' && product.price < filters.minPrice) return false;
+      if (typeof filters.maxPrice === 'number' && product.price > filters.maxPrice) return false;
+      if (typeof filters.featured === 'boolean' && product.featured !== filters.featured) return false;
       return true;
     });
   }
 
-  async getProduct(id: string): Promise<Product | null> {
-    await this.delay(200);
-    
-    const products = JSON.parse(localStorage.getItem(this.storageKeys.products) || '[]') as Product[];
-    return products.find(p => p.id === id) || null;
+  async getProduct(idOrSlug: string): Promise<Product | null> {
+    await this.delay(100);
+    const products = safeParse<Product[]>(localStorage.getItem(STORAGE.products), []);
+    // supporte id OU slug si tu enregistres le slug dans Product (sinon ne garde que id)
+    return (
+      products.find((p: any) => p.id === idOrSlug || p.slug === idOrSlug) ||
+      null
+    );
   }
 
   async getFeaturedProducts(limit: number = 4): Promise<Product[]> {
-    await this.delay(250);
-    
-    const products = JSON.parse(localStorage.getItem(this.storageKeys.products) || '[]') as Product[];
-    return products.filter(p => p.featured).slice(0, limit);
+    await this.delay(120);
+    const products = safeParse<Product[]>(localStorage.getItem(STORAGE.products), []);
+    return products.filter((p) => p.featured).slice(0, limit);
   }
 
-  // PANIER
+  // ========== PANIER ==========
+  /**
+   * Retourne un panier enrichi :
+   * - lignes où le product est trouvé
+   * - calcule lineTotal
+   */
   async getCart(): Promise<CartItem[]> {
-    await this.delay(100);
-    
-    const cart = JSON.parse(localStorage.getItem(this.storageKeys.cart) || '[]') as CartItem[];
-    const products = JSON.parse(localStorage.getItem(this.storageKeys.products) || '[]') as Product[];
-    
-    // Enrichit les items du panier avec les données produit
-    return cart.map(item => ({
-      ...item,
-      product: products.find(p => p.id === item.productId)
-    }));
+    await this.delay(60);
+
+    const raw = safeParse<CartItem[]>(localStorage.getItem(STORAGE.cart), []);
+    const products = safeParse<Product[]>(localStorage.getItem(STORAGE.products), []);
+
+    // on garde uniquement les lignes qui matchent un produit existant
+    const enriched = raw
+      .map((item) => {
+        const product = products.find((p: any) => p.id === item.productId);
+        if (!product) return null; // produit supprimé -> on l’ignore
+        return {
+          ...item,
+          product,
+          // sécurité: quantité minimale = 1
+          quantity: Math.max(1, item.quantity || 1),
+          // @ts-ignore (si CartItem n’a pas lineTotal dans le schéma)
+          lineTotal: product.price * Math.max(1, item.quantity || 1),
+        };
+      })
+      .filter(Boolean) as CartItem[];
+
+    // Si des lignes ont été ignorées, on sauvegarde un panier nettoyé
+    if (enriched.length !== raw.length) {
+      const compact = enriched.map(({ id, product, productId, quantity }) => ({
+        id,
+        productId,
+        quantity,
+      }));
+      localStorage.setItem(STORAGE.cart, JSON.stringify(compact));
+    }
+
+    return enriched;
   }
 
   async addToCart(productId: string, quantity: number = 1): Promise<CartItem[]> {
-    await this.delay(200);
-    
-    const cart = JSON.parse(localStorage.getItem(this.storageKeys.cart) || '[]') as CartItem[];
-    const existingItem = cart.find(item => item.productId === productId);
+    await this.delay(80);
 
-    if (existingItem) {
-      existingItem.quantity += quantity;
+    const cart = safeParse<CartItem[]>(localStorage.getItem(STORAGE.cart), []);
+    const existing = cart.find((i) => i.productId === productId);
+
+    if (existing) {
+      existing.quantity = Math.max(1, (existing.quantity || 1) + quantity);
     } else {
-      const newItem: CartItem = {
-        id: `cart_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
+      cart.push({
+        id: nowId('cart'),
         productId,
-        quantity
-      };
-      cart.push(newItem);
+        quantity: Math.max(1, quantity),
+      });
     }
 
-    localStorage.setItem(this.storageKeys.cart, JSON.stringify(cart));
+    localStorage.setItem(STORAGE.cart, JSON.stringify(cart));
+    // renvoie le panier enrichi
     return this.getCart();
   }
 
   async updateCartItem(itemId: string, quantity: number): Promise<CartItem[]> {
-    await this.delay(150);
-    
-    const cart = JSON.parse(localStorage.getItem(this.storageKeys.cart) || '[]') as CartItem[];
-    const item = cart.find(i => i.id === itemId);
+    await this.delay(70);
 
-    if (item) {
+    const cart = safeParse<CartItem[]>(localStorage.getItem(STORAGE.cart), []);
+    const idx = cart.findIndex((i) => i.id === itemId);
+
+    if (idx >= 0) {
       if (quantity <= 0) {
-        const index = cart.findIndex(i => i.id === itemId);
-        cart.splice(index, 1);
+        cart.splice(idx, 1);
       } else {
-        item.quantity = quantity;
+        cart[idx].quantity = Math.max(1, quantity);
       }
+      localStorage.setItem(STORAGE.cart, JSON.stringify(cart));
     }
 
-    localStorage.setItem(this.storageKeys.cart, JSON.stringify(cart));
     return this.getCart();
   }
 
   async removeFromCart(itemId: string): Promise<CartItem[]> {
-    await this.delay(100);
-    
-    const cart = JSON.parse(localStorage.getItem(this.storageKeys.cart) || '[]') as CartItem[];
-    const updatedCart = cart.filter(item => item.id !== itemId);
-    
-    localStorage.setItem(this.storageKeys.cart, JSON.stringify(updatedCart));
+    await this.delay(60);
+
+    const cart = safeParse<CartItem[]>(localStorage.getItem(STORAGE.cart), []);
+    const updated = cart.filter((i) => i.id !== itemId);
+    localStorage.setItem(STORAGE.cart, JSON.stringify(updated));
+
     return this.getCart();
   }
 
   async clearCart(): Promise<void> {
-    await this.delay(100);
-    localStorage.setItem(this.storageKeys.cart, JSON.stringify([]));
+    await this.delay(40);
+    localStorage.setItem(STORAGE.cart, JSON.stringify([]));
   }
 
   async getCartTotal(): Promise<number> {
     const cart = await this.getCart();
-    return cart.reduce((total, item) => {
-      return total + (item.product?.price || 0) * item.quantity;
-    }, 0);
+    return cart.reduce((sum, item) => sum + ((item as any).lineTotal || 0), 0);
   }
 
   async getCartCount(): Promise<number> {
     const cart = await this.getCart();
-    return cart.reduce((count, item) => count + item.quantity, 0);
+    return cart.reduce((count, item) => count + Math.max(1, item.quantity || 1), 0);
   }
 
-  // FAVORIS
+  // ========== FAVORIS ==========
   async getFavorites(): Promise<string[]> {
-    await this.delay(100);
-    return JSON.parse(localStorage.getItem(this.storageKeys.favorites) || '[]');
+    await this.delay(40);
+    return safeParse<string[]>(localStorage.getItem(STORAGE.favorites), []);
   }
 
   async addToFavorites(productId: string): Promise<string[]> {
-    await this.delay(100);
-    
-    const favorites = JSON.parse(localStorage.getItem(this.storageKeys.favorites) || '[]') as string[];
+    await this.delay(40);
+    const favorites = safeParse<string[]>(localStorage.getItem(STORAGE.favorites), []);
     if (!favorites.includes(productId)) {
       favorites.push(productId);
-      localStorage.setItem(this.storageKeys.favorites, JSON.stringify(favorites));
+      localStorage.setItem(STORAGE.favorites, JSON.stringify(favorites));
     }
-    
     return favorites;
   }
 
   async removeFromFavorites(productId: string): Promise<string[]> {
-    await this.delay(100);
-    
-    const favorites = JSON.parse(localStorage.getItem(this.storageKeys.favorites) || '[]') as string[];
-    const updatedFavorites = favorites.filter(id => id !== productId);
-    
-    localStorage.setItem(this.storageKeys.favorites, JSON.stringify(updatedFavorites));
-    return updatedFavorites;
+    await this.delay(40);
+    const favorites = safeParse<string[]>(localStorage.getItem(STORAGE.favorites), []);
+    const next = favorites.filter((id) => id !== productId);
+    localStorage.setItem(STORAGE.favorites, JSON.stringify(next));
+    return next;
   }
 
   async toggleFavorite(productId: string): Promise<boolean> {
-    const favorites = await this.getFavorites();
-    
-    if (favorites.includes(productId)) {
+    const cur = await this.getFavorites();
+    if (cur.includes(productId)) {
       await this.removeFromFavorites(productId);
       return false;
-    } else {
-      await this.addToFavorites(productId);
-      return true;
     }
+    await this.addToFavorites(productId);
+    return true;
   }
 
-  // COMMANDES
-  async createOrder(orderData: {
-    shippingAddress: string;
-    billingAddress: string;
-  }): Promise<Order> {
-    await this.delay(500);
-    
+  // ========== COMMANDES ==========
+  async placeOrder(order: Order): Promise<Order> {
+    await this.delay(120);
+    const orders = safeParse<Order[]>(localStorage.getItem(STORAGE.orders), []);
+    const next: Order = {
+      ...order,
+      id: order.id || nowId('order'),
+      createdAt: new Date().toISOString(),
+      status: order.status || 'paid',
+    };
+    orders.push(next);
+    localStorage.setItem(STORAGE.orders, JSON.stringify(orders));
+    await this.clearCart();
+    return next;
+  }
+
+  async createOrder(orderData: { shippingAddress: string; billingAddress: string }): Promise<Order> {
+    await this.delay(200);
+
     const cart = await this.getCart();
     const total = await this.getCartTotal();
-    
+
     const order: Order = {
-      id: `order_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
+      id: nowId('order'),
       items: cart,
       total,
       status: 'pending',
       shippingAddress: orderData.shippingAddress,
       billingAddress: orderData.billingAddress,
-      createdAt: new Date().toISOString()
+      createdAt: new Date().toISOString(),
     };
 
-    const orders = JSON.parse(localStorage.getItem(this.storageKeys.orders) || '[]') as Order[];
+    const orders = safeParse<Order[]>(localStorage.getItem(STORAGE.orders), []);
     orders.push(order);
-    localStorage.setItem(this.storageKeys.orders, JSON.stringify(orders));
+    localStorage.setItem(STORAGE.orders, JSON.stringify(orders));
 
-    // Vide le panier après commande
     await this.clearCart();
-
     return order;
   }
 
   async getOrders(): Promise<Order[]> {
-    await this.delay(200);
-    return JSON.parse(localStorage.getItem(this.storageKeys.orders) || '[]');
+    await this.delay(100);
+    return safeParse<Order[]>(localStorage.getItem(STORAGE.orders), []);
   }
 
   async getOrder(id: string): Promise<Order | null> {
-    await this.delay(150);
-    const orders = JSON.parse(localStorage.getItem(this.storageKeys.orders) || '[]') as Order[];
-    return orders.find(order => order.id === id) || null;
+    await this.delay(80);
+    const orders = safeParse<Order[]>(localStorage.getItem(STORAGE.orders), []);
+    return orders.find((o) => o.id === id) || null;
   }
 
-  // UTILITAIRES
+  // ========== UTILITAIRES ==========
   async searchProducts(query: string): Promise<Product[]> {
     return this.getProducts({ search: query });
   }
 
   getCategories(): string[] {
-    const products = JSON.parse(localStorage.getItem(this.storageKeys.products) || '[]') as Product[];
-    return Array.from(new Set(products.map(p => p.category)));
+    const products = safeParse<Product[]>(localStorage.getItem(STORAGE.products), []);
+    return Array.from(new Set(products.map((p) => p.category)));
   }
 
-  // Méthode pour réinitialiser toutes les données (utile pour le développement)
   resetAllData(): void {
-    Object.values(this.storageKeys).forEach(key => {
-      localStorage.removeItem(key);
-    });
+    if (typeof window === 'undefined' || !('localStorage' in window)) return;
+    for (const key of Object.values(STORAGE)) localStorage.removeItem(key);
     this.initializeData();
   }
 }
 
 // Instance singleton
 export const dataService = new DataService();
+export type { CartItem };

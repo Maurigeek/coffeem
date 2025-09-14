@@ -1,16 +1,19 @@
-import { Product } from '@shared/schema';
-import espressoImage from '@assets/generated_images/Premium_espresso_machine_product_4825e079.png';
-import beanToCupImage from '@assets/generated_images/Bean-to-cup_coffee_machine_product_a4000224.png';
-import frenchPressImage from '@assets/generated_images/Luxury_French_press_machine_cce82276.png';
+import { Product } from '@shared/schema';;
+import { slugify } from './slugify';
+import { cleanSpecs } from './specs';
 
-export const mockProducts: Product[] = [
+export type ProductWithSlug = Product & { slug: string };
+
+export const baseProducts: Omit<ProductWithSlug, 'slug'>[] = [
   {
     id: "1",
     name: "Espresso Maestro Pro",
     description: "La machine espresso ultime pour les amateurs de café exigeants. Conçue avec une attention méticuleuse aux détails, elle combine technologie de pointe et design élégant pour offrir une expérience café exceptionnelle.",
     price: 1299.99,
     originalPrice: 1599.99,
-    image: espressoImage,
+    image: '/Premium_espresso_machine_product_4825e079.png',
+    images: ['/Premium_espresso_machine_product_4825e079.png'],
+    media360: Array.from({length:12}, (_,i)=>`https://picsum.photos/seed/espresso-${i+1}/800/600`),
     category: "Espresso",
     features: [
       "Système de pression 15 bars pour un espresso parfait",
@@ -26,7 +29,7 @@ export const mockProducts: Product[] = [
     featured: true,
     rating: 4.8,
     reviewCount: 142,
-    specifications: {
+    specifications: cleanSpecs({
       'Dimensions': '35 x 40 x 45 cm',
       'Poids': '8.5 kg',
       'Puissance': '1450W',
@@ -35,7 +38,7 @@ export const mockProducts: Product[] = [
       'Matériaux': 'Acier inoxydable et plastique ABS',
       'Couleur': 'Noir mat / Acier inoxydable',
       'Garantie': '3 ans'
-    }
+    })
   },
   {
     id: "2",
@@ -43,7 +46,9 @@ export const mockProducts: Product[] = [
     description: "L'expérience café automatisée par excellence. Cette machine transforme les grains de café en délicieuse boisson d'une simple pression, offrant la fraîcheur et la qualité d'un café professionnel à domicile.",
     price: 2499.99,
     originalPrice: 2899.99,
-    image: beanToCupImage,
+    image: '/Bean-to-cup_coffee_machine_product_a4000224.png',
+    images: ['/Bean-to-cup_coffee_machine_product_a4000224.png'],
+    media360: Array.from({length:12}, (_,i)=>`https://picsum.photos/seed/bean-${i+1}/800/600`),
     category: "Automatique",
     features: [
       "Moulin céramique silencieux avec 10 réglages de mouture",
@@ -59,7 +64,7 @@ export const mockProducts: Product[] = [
     featured: true,
     rating: 4.9,
     reviewCount: 89,
-    specifications: {
+    specifications: cleanSpecs({
       'Dimensions': '42 x 35 x 48 cm',
       'Poids': '12.3 kg',
       'Puissance': '1850W',
@@ -68,14 +73,16 @@ export const mockProducts: Product[] = [
       'Capacité grains': '500g',
       'Matériaux': 'Acier inoxydable brossé',
       'Garantie': '5 ans'
-    }
+    })
   },
   {
     id: "3",
     name: "French Press Deluxe",
     description: "L'art du café français revisité avec une élégance contemporaine. Cette presse française haut de gamme révèle tous les arômes de votre café avec un design sophistiqué en cuivre et acier.",
     price: 899.99,
-    image: frenchPressImage,
+    image: '/Luxury_French_press_machine_cce82276.png',
+    images: ['/Luxury_French_press_machine_cce82276.png'],
+    media360: Array.from({length:12}, (_,i)=>`https://picsum.photos/seed/press-${i+1}/800/600`),
     category: "French Press",
     features: [
       "Finition cuivre premium artisanale",
@@ -91,7 +98,7 @@ export const mockProducts: Product[] = [
     featured: false,
     rating: 4.6,
     reviewCount: 234,
-    specifications: {
+    specifications: cleanSpecs({
       'Dimensions': '18 x 15 x 28 cm',
       'Poids': '1.8 kg',
       'Capacité': '1.2L',
@@ -99,7 +106,7 @@ export const mockProducts: Product[] = [
       'Couleur': 'Cuivre brillant',
       'Entretien': 'Compatible lave-vaisselle',
       'Garantie': '2 ans'
-    }
+    })
   },
   {
     id: "4",
@@ -107,7 +114,9 @@ export const mockProducts: Product[] = [
     description: "Le maître du cappuccino pour les connaisseurs. Machine semi-automatique offrant un contrôle total sur chaque étape de préparation, du mouturage à la texture parfaite du lait.",
     price: 1899.99,
     originalPrice: 2199.99,
-    image: espressoImage,
+    image: '/Premium_espresso_machine_product_4825e079.png',
+    images: ['/Premium_espresso_machine_product_4825e079.png'],
+    media360: Array.from({length:12}, (_,i)=>`https://picsum.photos/seed/espresso-${i+1}/800/600`),
     category: "Cappuccino",
     features: [
       "Buse vapeur rotative à 360° pour mousser le lait",
@@ -123,7 +132,7 @@ export const mockProducts: Product[] = [
     featured: true,
     rating: 4.7,
     reviewCount: 167,
-    specifications: {
+    specifications: cleanSpecs({
       'Dimensions': '38 x 42 x 44 cm',
       'Poids': '11.2 kg',
       'Puissance': '1650W',
@@ -132,14 +141,16 @@ export const mockProducts: Product[] = [
       'Capacité réservoir lait': '1.5L',
       'Écran': 'Tactile 7 pouces couleur',
       'Garantie': '4 ans'
-    }
+    })
   },
   {
     id: "5",
     name: "Barista Station Pro",
     description: "La station café professionnelle pour votre cuisine. Équipée d'une double chaudière et de contrôles pro, elle rivalise avec les machines de café commercial pour les vrais passionnés.",
     price: 3299.99,
-    image: beanToCupImage,
+    image: '/Bean-to-cup_coffee_machine_product_a4000224.png',
+    images: ['/Bean-to-cup_coffee_machine_product_a4000224.png'],
+    media360: Array.from({length:12}, (_,i)=>`https://picsum.photos/seed/bean-${i+1}/800/600`),
     category: "Professionnel",
     features: [
       "Double chaudière indépendante cuivre",
@@ -155,7 +166,7 @@ export const mockProducts: Product[] = [
     featured: true,
     rating: 4.9,
     reviewCount: 45,
-    specifications: {
+    specifications: cleanSpecs({
       'Dimensions': '58 x 53 x 45 cm',
       'Poids': '28.5 kg',
       'Puissance': '2400W',
@@ -164,14 +175,16 @@ export const mockProducts: Product[] = [
       'Chaudières': 'Double (1.4L + 2.6L)',
       'Matériaux': 'Acier inoxydable 304',
       'Garantie': '7 ans'
-    }
+    })
   },
   {
     id: "6",
     name: "Compact Essential",
     description: "L'espresso de qualité dans un format compact. Parfaite pour les petites cuisines sans compromis sur la qualité, elle offre tous les essentiels d'une grande machine espresso.",
     price: 599.99,
-    image: frenchPressImage,
+    image: '/Luxury_French_press_machine_cce82276.png',
+    images: ['/Luxury_French_press_machine_cce82276.png'],
+    media360: Array.from({length:12}, (_,i)=>`https://picsum.photos/seed/press-${i+1}/800/600`),
     category: "Compact",
     features: [
       "Design ultra-compact gain de place",
@@ -187,7 +200,7 @@ export const mockProducts: Product[] = [
     featured: false,
     rating: 4.4,
     reviewCount: 312,
-    specifications: {
+    specifications: cleanSpecs({
       'Dimensions': '25 x 32 x 28 cm',
       'Poids': '4.2 kg',
       'Puissance': '1200W',
@@ -196,7 +209,7 @@ export const mockProducts: Product[] = [
       'Matériaux': 'Plastique ABS premium',
       'Couleur': 'Noir mat',
       'Garantie': '2 ans'
-    }
+    })
   },
   {
     id: "7",
@@ -204,7 +217,9 @@ export const mockProducts: Product[] = [
     description: "La machine à café qui transforme votre cuisine en café italien authentique. Spécialisée dans les mochas et chocolats chauds, elle marie parfaitement café et cacao pour des boissons gourmandes.",
     price: 1699.99,
     originalPrice: 1999.99,
-    image: espressoImage,
+    image: '/Premium_espresso_machine_product_4825e079.png',
+    images: ['/Premium_espresso_machine_product_4825e079.png'],
+    media360: Array.from({length:12}, (_,i)=>`https://picsum.photos/seed/espresso-${i+1}/800/600`),
     category: "Mocha",
     features: [
       "Réservoir chocolat intégré chauffant",
@@ -220,7 +235,7 @@ export const mockProducts: Product[] = [
     featured: true,
     rating: 4.5,
     reviewCount: 98,
-    specifications: {
+    specifications: cleanSpecs({
       'Dimensions': '40 x 38 x 42 cm',
       'Poids': '9.8 kg',
       'Puissance': '1750W',
@@ -229,14 +244,16 @@ export const mockProducts: Product[] = [
       'Capacité chocolat': '800ml',
       'Écran': '5 pouces tactile',
       'Garantie': '3 ans'
-    }
+    })
   },
   {
     id: "8",
     name: "Cold Brew Master",
     description: "Révolutionnez votre été avec cette machine dédiée au cold brew et café glacé. Extraction à froid pour révéler des arômes uniques et des cafés rafraîchissants d'exception.",
     price: 1199.99,
-    image: beanToCupImage,
+    image: '/Bean-to-cup_coffee_machine_product_a4000224.png',
+    images: ['/Bean-to-cup_coffee_machine_product_a4000224.png'],
+    media360: Array.from({length:12}, (_,i)=>`https://picsum.photos/seed/bean-${i+1}/800/600`),
     category: "Cold Brew",
     features: [
       "Système d'extraction à froid 12-24h",
@@ -252,7 +269,7 @@ export const mockProducts: Product[] = [
     featured: false,
     rating: 4.3,
     reviewCount: 156,
-    specifications: {
+    specifications: cleanSpecs({
       'Dimensions': '35 x 25 x 65 cm',
       'Poids': '6.8 kg',
       'Capacité totale': '3L',
@@ -260,9 +277,14 @@ export const mockProducts: Product[] = [
       'Matériaux': 'Verre, acier inoxydable',
       'Température': 'Ambiante à froid',
       'Garantie': '2 ans'
-    }
+    })
   }
-];
+]
+
+export const mockProducts: ProductWithSlug[] = baseProducts.map(p => ({
+  ...p,
+  slug: slugify(p.name),
+}));
 
 export const categories = [
   'Espresso', 

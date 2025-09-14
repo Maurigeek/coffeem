@@ -1,6 +1,6 @@
 import { Button } from '@/components/ui/button';
 import { ArrowRight, Play } from 'lucide-react';
-import heroImage from '@assets/generated_images/Coffee_machine_lifestyle_hero_c016d78a.png';
+import { Link } from 'wouter';
 
 export default function HeroSection() {
   const handleShopNow = () => {
@@ -16,7 +16,7 @@ export default function HeroSection() {
       {/* Background Image with Dark Overlay */}
       <div className="absolute inset-0">
         <img
-          src={heroImage}
+          src='/Coffee_machine_lifestyle_hero_c016d78a.png'
           alt="Machine à café premium dans cuisine moderne"
           className="w-full h-full object-cover"
         />
@@ -38,17 +38,20 @@ export default function HeroSection() {
             </p>
             
             <div className="mt-8 flex flex-col sm:flex-row gap-4">
-              <Button
-                size="lg"
-                className="group bg-primary hover:bg-primary/90 text-primary-foreground px-8 py-3"
-                onClick={handleShopNow}
-                data-testid="button-shop-now"
-              >
-                Découvrir la Collection
-                <ArrowRight className="ml-2 h-5 w-5 group-hover:translate-x-1 transition-transform" />
-              </Button>
+              <Link href="/catalog">
+                <Button
+                  size="lg"
+                  className="group bg-primary hover:bg-primary/90 text-primary-foreground px-8 py-3"
+                  // onClick={handleShopNow}
+                  data-testid="button-shop-now"
+                >
+                    Découvrir la Collection
+                    <ArrowRight className="ml-2 h-5 w-5 group-hover:translate-x-1 transition-transform" />
+                </Button>
+                </Link>
+
               
-              <Button
+              {/* <Button
                 size="lg"
                 variant="outline"
                 className="bg-white/10 border-white/20 text-white hover:bg-white/20 backdrop-blur-sm px-8 py-3"
@@ -57,7 +60,7 @@ export default function HeroSection() {
               >
                 <Play className="mr-2 h-5 w-5" />
                 Voir la Démo
-              </Button>
+              </Button> */}
             </div>
             
             <div className="mt-12 grid grid-cols-3 gap-8 pt-8 border-t border-white/20">

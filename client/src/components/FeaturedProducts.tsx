@@ -4,6 +4,8 @@ import { ArrowRight } from 'lucide-react';
 import { useFeaturedProducts } from '@/lib/hooks/useProducts';
 import { useAddToCart } from '@/lib/hooks/useCart';
 import { useToggleFavorite } from '@/lib/hooks/useFavorites';
+import { Link } from 'wouter';
+import { slugify } from '@/lib/slugify';
 
 export default function FeaturedProducts() {
   const { data: featuredProducts = [], isLoading } = useFeaturedProducts(4);
@@ -81,6 +83,7 @@ export default function FeaturedProducts() {
 
         {/* Call to Action */}
         <div className="text-center">
+            <Link href="/catalog">
           <Button
             size="lg"
             onClick={handleViewAll}
@@ -90,6 +93,7 @@ export default function FeaturedProducts() {
             Voir Tous les Produits
             <ArrowRight className="ml-2 h-5 w-5 group-hover:translate-x-1 transition-transform" />
           </Button>
+          </Link>
         </div>
       </div>
     </section>

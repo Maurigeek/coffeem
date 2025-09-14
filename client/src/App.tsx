@@ -12,19 +12,27 @@ import ProductDetail from "@/pages/ProductDetail";
 import About from "@/pages/About";
 import Premium from "@/pages/Premium";
 import Cart from "@/pages/Cart";
+import Checkout from "@/pages/Checkout";
 import NotFound from "@/pages/not-found";
+import ScrollToTop from '@/components/ScrollToTop';
 
 function Router() {
   return (
-    <Switch>
-      <Route path="/" component={Home} />
-      <Route path="/catalog" component={Catalog} />
-      <Route path="/product/:id" component={ProductDetail} />
-      <Route path="/about" component={About} />
-      <Route path="/premium" component={Premium} />
-      <Route path="/cart" component={Cart} />
-      <Route component={NotFound} />
-    </Switch>
+
+      <>
+      <ScrollToTop />
+      <Switch>
+        <Route path="/" component={Home} />
+        <Route path="/catalog" component={Catalog} />
+        <Route path="/product/:slug" component={ProductDetail} />
+        <Route path="/about" component={About} />
+        {/* <Route path="/premium" component={Premium} /> */}
+        <Route path="/cart" component={Cart} />
+        <Route path="/checkout" component={Checkout} />
+        <Route component={NotFound} />
+      </Switch>
+      </>
+      
   );
 }
 

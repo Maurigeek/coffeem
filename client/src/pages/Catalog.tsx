@@ -7,9 +7,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Slider } from '@/components/ui/slider';
 import ProductCard from '@/components/ProductCard';
 import { Search, SlidersHorizontal } from 'lucide-react';
-import espressoImage from '@assets/generated_images/Premium_espresso_machine_product_4825e079.png';
-import beanToCupImage from '@assets/generated_images/Bean-to-cup_coffee_machine_product_a4000224.png';
-import frenchPressImage from '@assets/generated_images/Luxury_French_press_machine_cce82276.png';
+import { mockProducts } from '@/lib/mockData';
 
 export default function Catalog() {
   const [searchQuery, setSearchQuery] = useState('');
@@ -18,99 +16,101 @@ export default function Catalog() {
   const [selectedCategories, setSelectedCategories] = useState<string[]>([]);
   const [selectedBrands, setSelectedBrands] = useState<string[]>([]);
 
+  const products = mockProducts;
+
   // todo: remove mock functionality
-  const products = [
-    {
-      id: "1",
-      name: "Espresso Maestro Pro",
-      price: 1299.99,
-      image: espressoImage,
-      category: "Espresso",
-      features: [
-        "Système de pression 15 bars",
-        "Moulin intégré en acier",
-        "Écran tactile intelligent",
-        "Vapeur professionnelle"
-      ],
-      inStock: 5,
-      featured: true,
-    },
-    {
-      id: "2",
-      name: "Bean-to-Cup Elite",
-      price: 2499.99,
-      image: beanToCupImage,
-      category: "Automatique",
-      features: [
-        "Moulin céramique silencieux",
-        "12 recettes préprogrammées",
-        "Réservoir d'eau 2.5L",
-        "Nettoyage automatique"
-      ],
-      inStock: 8,
-      featured: true,
-    },
-    {
-      id: "3",
-      name: "French Press Deluxe",
-      price: 899.99,
-      image: frenchPressImage,
-      category: "French Press",
-      features: [
-        "Finition cuivre premium",
-        "Double paroi isolante",
-        "Filtre ultra-fin",
-        "Capacité 1.2L"
-      ],
-      inStock: 12,
-      featured: false,
-    },
-    {
-      id: "4",
-      name: "Cappuccino Master",
-      price: 1899.99,
-      image: espressoImage,
-      category: "Cappuccino",
-      features: [
-        "Buse vapeur rotative",
-        "Contrôle de température précis",
-        "Réservoir lait intégré",
-        "Interface utilisateur intuitive"
-      ],
-      inStock: 3,
-      featured: true,
-    },
-    {
-      id: "5",
-      name: "Barista Station Pro",
-      price: 3299.99,
-      image: beanToCupImage,
-      category: "Professionnel",
-      features: [
-        "Double chaudière indépendante",
-        "Contrôle PID de température",
-        "Manomètre analogique",
-        "Construction tout métal"
-      ],
-      inStock: 2,
-      featured: true,
-    },
-    {
-      id: "6",
-      name: "Compact Essential",
-      price: 599.99,
-      image: frenchPressImage,
-      category: "Compact",
-      features: [
-        "Design ultra-compact",
-        "Une touche pour espresso",
-        "Réservoir 1.2L",
-        "Économie d'énergie"
-      ],
-      inStock: 15,
-      featured: false,
-    },
-  ];
+  // const products = [
+  //   {
+  //     id: "1",
+  //     name: "Espresso Maestro Pro",
+  //     price: 1299.99,
+  //     image: espressoImage,
+  //     category: "Espresso",
+  //     features: [
+  //       "Système de pression 15 bars",
+  //       "Moulin intégré en acier",
+  //       "Écran tactile intelligent",
+  //       "Vapeur professionnelle"
+  //     ],
+  //     inStock: 5,
+  //     featured: true,
+  //   },
+  //   {
+  //     id: "2",
+  //     name: "Bean-to-Cup Elite",
+  //     price: 2499.99,
+  //     image: beanToCupImage,
+  //     category: "Automatique",
+  //     features: [
+  //       "Moulin céramique silencieux",
+  //       "12 recettes préprogrammées",
+  //       "Réservoir d'eau 2.5L",
+  //       "Nettoyage automatique"
+  //     ],
+  //     inStock: 8,
+  //     featured: true,
+  //   },
+  //   {
+  //     id: "3",
+  //     name: "French Press Deluxe",
+  //     price: 899.99,
+  //     image: frenchPressImage,
+  //     category: "French Press",
+  //     features: [
+  //       "Finition cuivre premium",
+  //       "Double paroi isolante",
+  //       "Filtre ultra-fin",
+  //       "Capacité 1.2L"
+  //     ],
+  //     inStock: 12,
+  //     featured: false,
+  //   },
+  //   {
+  //     id: "4",
+  //     name: "Cappuccino Master",
+  //     price: 1899.99,
+  //     image: espressoImage,
+  //     category: "Cappuccino",
+  //     features: [
+  //       "Buse vapeur rotative",
+  //       "Contrôle de température précis",
+  //       "Réservoir lait intégré",
+  //       "Interface utilisateur intuitive"
+  //     ],
+  //     inStock: 3,
+  //     featured: true,
+  //   },
+  //   {
+  //     id: "5",
+  //     name: "Barista Station Pro",
+  //     price: 3299.99,
+  //     image: beanToCupImage,
+  //     category: "Professionnel",
+  //     features: [
+  //       "Double chaudière indépendante",
+  //       "Contrôle PID de température",
+  //       "Manomètre analogique",
+  //       "Construction tout métal"
+  //     ],
+  //     inStock: 2,
+  //     featured: true,
+  //   },
+  //   {
+  //     id: "6",
+  //     name: "Compact Essential",
+  //     price: 599.99,
+  //     image: frenchPressImage,
+  //     category: "Compact",
+  //     features: [
+  //       "Design ultra-compact",
+  //       "Une touche pour espresso",
+  //       "Réservoir 1.2L",
+  //       "Économie d'énergie"
+  //     ],
+  //     inStock: 15,
+  //     featured: false,
+  //   },
+  // ];
 
   const categories = ['Espresso', 'Automatique', 'French Press', 'Cappuccino', 'Professionnel', 'Compact'];
   const brands = ['Cafetière Premium', 'Elite Coffee', 'Master Brew', 'Professional Series'];
@@ -312,6 +312,15 @@ export default function Catalog() {
               {sortedProducts.map((product) => (
                 <ProductCard
                   key={product.id}
+                  // id={product.id}
+                  // slug={product.slug}            
+                  // name={product.name}
+                  // price={product.price}
+                  // image={product.image}
+                  // category={product.category}
+                  // features={product.features}
+                  // inStock={product.inStock}
+                  // featured={product.featured}
                   {...product}
                   onAddToCart={handleAddToCart}
                   onToggleFavorite={handleToggleFavorite}

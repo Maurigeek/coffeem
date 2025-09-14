@@ -22,13 +22,13 @@ export default function Header() {
   const navigation = [
     { name: 'Accueil', href: '/' },
     { name: 'Catalogue', href: '/catalog' },
-    { name: 'Machines Premium', href: '/premium' },
+    // { name: 'Machines Premium', href: '/premium' },
     { name: 'À propos', href: '/about' },
   ];
 
   const handleSearch = (e: React.FormEvent) => {
     e.preventDefault();
-    console.log('Recherche:', searchQuery);
+    // console.log('Recherche:', searchQuery);
   };
 
   return (
@@ -88,25 +88,28 @@ export default function Header() {
               size="icon"
               className="relative"
               data-testid="button-cart"
-              onClick={() => console.log('Panier ouvert')}
+              // onClick={() => console.log('Panier ouvert')}
             >
-              <ShoppingCart className="h-5 w-5" />
-              {cartCount > 0 && (
-                <span className="absolute -top-1 -right-1 h-5 w-5 rounded-full bg-primary text-xs text-primary-foreground flex items-center justify-center">
-                  {cartCount}
-                </span>
-              )}
+               <Link href="/cart" data-testid="header-cart-link">
+               <ShoppingCart className="h-5 w-5" />
+                {cartCount > 0 && (
+                  <span className="absolute -top-1 -right-1 h-5 w-5 rounded-full bg-primary text-xs text-primary-foreground flex items-center justify-center">
+                    {cartCount}
+                  </span>
+                )}
+               </Link>
+              
             </Button>
 
             {/* User Account */}
-            <Button
+            {/* <Button
               variant="ghost"
               size="icon"
               data-testid="button-account"
               onClick={() => console.log('Compte utilisateur')}
             >
               <User className="h-5 w-5" />
-            </Button>
+            </Button> */}
 
             {/* Mobile Menu */}
             <Sheet open={isMobileMenuOpen} onOpenChange={setIsMobileMenuOpen}>

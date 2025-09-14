@@ -1,32 +1,56 @@
-import { useState } from 'react';
+import { useState, useMemo } from 'react';
 import { Link } from 'wouter';
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Separator } from "@/components/ui/separator";
 import { Badge } from "@/components/ui/badge";
-import { useCart, useUpdateCartItem, useRemoveFromCart, useClearCart, useCartTotal } from "@/lib/hooks/useCart";
+import {
+  useCart,
+  useUpdateCartItem,
+  useRemoveFromCart,
+  useClearCart,
+  useCartTotal
+} from "@/lib/hooks/useCart";
 import { Minus, Plus, Trash2, ShoppingCart, ArrowLeft } from "lucide-react";
 
 export default function Cart() {
+  // Liste enrichie du panier
   const { data: cartItems = [], isLoading } = useCart();
-  const { data: cartTotal = { total: 0, subtotal: 0, shipping: 0, tax: 0 } } = useCartTotal();
+  // Total (numérique) calculé par le service
+  const { data: totalFromHook = 0 } = useCartTotal();
+
   const updateCartMutation = useUpdateCartItem();
   const removeFromCartMutation = useRemoveFromCart();
   const clearCartMutation = useClearCart();
 
   const [promoCode, setPromoCode] = useState('');
 
-  const handleQuantityChange = (productId: string, quantity: number) => {
+  // On calcule un récap local propre (subtotaux, etc.)
+  const { subtotal, shipping, tax, total } = useMemo(() => {
+    const subtotal = cartItems.reduce((s: number, it: any) => s + (it.lineTotal || (it.product?.price || 0) * (it.quantity || 1)), 0);
+    const shipping = 0; // ajustable
+    const tax = 0;      // ajustable
+    const total = subtotal + shipping + tax;
+    // si tu préfères faire confiance au hook, remplace "total" par totalFromHook
+    return { subtotal, shipping, tax, total: totalFromHook || total };
+  }, [cartItems, totalFromHook]);
+
+  const cartCount = useMemo(
+    () => cartItems.reduce((acc: number, it: any) => acc + Math.max(1, it.quantity || 1), 0),
+    [cartItems]
+  );
+
+  const handleQuantityChange = (itemId: string, quantity: number) => {
     if (quantity <= 0) {
-      removeFromCartMutation.mutate(productId);
+      removeFromCartMutation.mutate(itemId);
     } else {
-      updateCartMutation.mutate({ itemId: productId, quantity });
+      updateCartMutation.mutate({ itemId, quantity });
     }
   };
 
-  const handleRemoveItem = (productId: string) => {
-    removeFromCartMutation.mutate(productId);
+  const handleRemoveItem = (itemId: string) => {
+    removeFromCartMutation.mutate(itemId);
   };
 
   const handleClearCart = () => {
@@ -37,7 +61,7 @@ export default function Cart() {
 
   const handleApplyPromo = () => {
     console.log('Appliquer le code promo:', promoCode);
-    // Ici on pourrait implémenter la logique des codes promo
+    // TODO: logique code promo si besoin
   };
 
   if (isLoading) {
@@ -105,12 +129,12 @@ export default function Cart() {
           </div>
           <div className="flex items-center gap-4">
             <Badge variant="secondary" data-testid="badge-cart-count">
-              {cartItems.length} article{cartItems.length > 1 ? 's' : ''}
+              {cartCount} article{cartCount > 1 ? 's' : ''}
             </Badge>
             {cartItems.length > 0 && (
-              <Button 
-                variant="outline" 
-                size="sm" 
+              <Button
+                variant="outline"
+                size="sm"
                 onClick={handleClearCart}
                 data-testid="button-clear-cart"
               >
@@ -129,18 +153,22 @@ export default function Cart() {
                 <CardTitle className="text-xl">Articles dans votre panier</CardTitle>
               </CardHeader>
               <CardContent className="space-y-4">
-                {cartItems.map((item) => (
-                  <div key={item.productId} className="flex items-center gap-4 p-4 border rounded-lg" data-testid={`cart-item-${item.productId}`}>
+                {cartItems.map((item: any) => (
+                  <div
+                    key={item.id}
+                    className="flex items-center gap-4 p-4 border rounded-lg"
+                    data-testid={`cart-item-${item.id}`}
+                  >
                     {item.product?.image && (
                       <div className="w-20 h-20 bg-muted rounded-lg overflow-hidden flex-shrink-0">
-                        <img 
-                          src={item.product.image} 
+                        <img
+                          src={item.product.image}
                           alt={item.product.name}
                           className="w-full h-full object-cover"
                         />
                       </div>
                     )}
-                    
+
                     <div className="flex-1 min-w-0">
                       <h3 className="font-medium text-foreground truncate">
                         {item.product?.name || `Produit ${item.productId}`}
@@ -149,10 +177,10 @@ export default function Cart() {
                         {item.product?.category}
                       </p>
                       <p className="text-lg font-semibold text-primary mt-1">
-                        {item.product?.price.toLocaleString('fr-FR', { 
-                          style: 'currency', 
-                          currency: 'EUR' 
-                        }) || '0€'}
+                        {(item.product?.price || 0).toLocaleString('fr-FR', {
+                          style: 'currency',
+                          currency: 'EUR',
+                        })}
                       </p>
                     </div>
 
@@ -160,19 +188,21 @@ export default function Cart() {
                       <Button
                         variant="outline"
                         size="icon"
-                        onClick={() => handleQuantityChange(item.productId, item.quantity - 1)}
+                        onClick={() => handleQuantityChange(item.id, (item.quantity || 1) - 1)}
                         disabled={updateCartMutation.isPending}
-                        data-testid={`button-decrease-${item.productId}`}
+                        data-testid={`button-decrease-${item.id}`}
                       >
                         <Minus className="w-4 h-4" />
                       </Button>
-                      <span className="w-12 text-center font-medium">{item.quantity}</span>
+                      <span className="w-12 text-center font-medium">
+                        {item.quantity}
+                      </span>
                       <Button
                         variant="outline"
                         size="icon"
-                        onClick={() => handleQuantityChange(item.productId, item.quantity + 1)}
+                        onClick={() => handleQuantityChange(item.id, (item.quantity || 1) + 1)}
                         disabled={updateCartMutation.isPending}
-                        data-testid={`button-increase-${item.productId}`}
+                        data-testid={`button-increase-${item.id}`}
                       >
                         <Plus className="w-4 h-4" />
                       </Button>
@@ -181,10 +211,10 @@ export default function Cart() {
                     <Button
                       variant="ghost"
                       size="icon"
-                      onClick={() => handleRemoveItem(item.productId)}
+                      onClick={() => handleRemoveItem(item.id)}
                       disabled={removeFromCartMutation.isPending}
                       className="text-destructive hover:text-destructive"
-                      data-testid={`button-remove-${item.productId}`}
+                      data-testid={`button-remove-${item.id}`}
                     >
                       <Trash2 className="w-4 h-4" />
                     </Button>
@@ -203,8 +233,8 @@ export default function Cart() {
                     onChange={(e) => setPromoCode(e.target.value)}
                     data-testid="input-promo-code"
                   />
-                  <Button 
-                    variant="outline" 
+                  <Button
+                    variant="outline"
                     onClick={handleApplyPromo}
                     data-testid="button-apply-promo"
                   >
@@ -225,31 +255,23 @@ export default function Cart() {
                 <div className="flex justify-between">
                   <span>Sous-total</span>
                   <span data-testid="text-subtotal">
-                    {(typeof cartTotal === 'object' ? cartTotal.subtotal : 0).toLocaleString('fr-FR', { 
-                      style: 'currency', 
-                      currency: 'EUR' 
-                    })}
+                    {subtotal.toLocaleString('fr-FR', { style: 'currency', currency: 'EUR' })}
                   </span>
                 </div>
-                
+
                 <div className="flex justify-between">
                   <span>Livraison</span>
-                  <span className={(typeof cartTotal === 'object' ? cartTotal.shipping : 0) === 0 ? "text-green-600" : ""} data-testid="text-shipping">
-                    {(typeof cartTotal === 'object' ? cartTotal.shipping : 0) === 0 ? "Gratuite" : 
-                     (typeof cartTotal === 'object' ? cartTotal.shipping : 0).toLocaleString('fr-FR', { 
-                       style: 'currency', 
-                       currency: 'EUR' 
-                     })}
+                  <span className={shipping === 0 ? "text-green-600" : ""} data-testid="text-shipping">
+                    {shipping === 0
+                      ? "Gratuite"
+                      : shipping.toLocaleString('fr-FR', { style: 'currency', currency: 'EUR' })}
                   </span>
                 </div>
-                
+
                 <div className="flex justify-between">
                   <span>TVA</span>
                   <span data-testid="text-tax">
-                    {(typeof cartTotal === 'object' ? cartTotal.tax : 0).toLocaleString('fr-FR', { 
-                      style: 'currency', 
-                      currency: 'EUR' 
-                    })}
+                    {tax.toLocaleString('fr-FR', { style: 'currency', currency: 'EUR' })}
                   </span>
                 </div>
 
@@ -258,35 +280,17 @@ export default function Cart() {
                 <div className="flex justify-between font-semibold text-lg">
                   <span>Total</span>
                   <span className="text-primary" data-testid="text-total">
-                    {(typeof cartTotal === 'object' ? cartTotal.total : cartTotal).toLocaleString('fr-FR', { 
-                      style: 'currency', 
-                      currency: 'EUR' 
-                    })}
+                    {total.toLocaleString('fr-FR', { style: 'currency', currency: 'EUR' })}
                   </span>
                 </div>
 
                 <div className="space-y-3 pt-4">
-                  <Button 
-                    asChild
-                    size="lg" 
-                    className="w-full"
-                    data-testid="button-proceed-checkout"
-                  >
-                    <Link href="/checkout">
-                      Procéder au Paiement
-                    </Link>
+                  <Button asChild size="lg" className="w-full" data-testid="button-proceed-checkout">
+                    <Link href="/checkout">Procéder au Paiement</Link>
                   </Button>
-                  
-                  <Button 
-                    asChild
-                    variant="outline" 
-                    size="lg" 
-                    className="w-full"
-                    data-testid="button-continue-shopping-summary"
-                  >
-                    <Link href="/catalog">
-                      Continuer mes Achats
-                    </Link>
+
+                  <Button asChild variant="outline" size="lg" className="w-full" data-testid="button-continue-shopping-summary">
+                    <Link href="/catalog">Continuer mes Achats</Link>
                   </Button>
                 </div>
 

@@ -120,7 +120,7 @@ export default function About() {
       {/* Story Section */}
       <section className="py-20 bg-card">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 items-center">
+          <div className="grid grid-cols-1 lg:grid-cols-1 gap-12 items-center">
             <div>
               <Badge variant="outline" className="mb-4">
                 NOTRE HISTOIRE
@@ -146,7 +146,7 @@ export default function About() {
                 </p>
               </div>
             </div>
-            <div className="relative">
+            {/* <div className="relative">
               <Card className="p-6">
                 <CardHeader>
                   <CardTitle className="flex items-center gap-2">
@@ -164,7 +164,7 @@ export default function About() {
                   ))}
                 </CardContent>
               </Card>
-            </div>
+            </div> */}
           </div>
         </div>
       </section>

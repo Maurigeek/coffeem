@@ -15,28 +15,28 @@ export default function Footer() {
 
   const navigation = {
     shop: [
-      { name: 'Machines Espresso', href: '/espresso' },
-      { name: 'Machines Automatiques', href: '/automatic' },
-      { name: 'Accessoires', href: '/accessories' },
-      { name: 'Promotions', href: '/promotions' },
+      { name: 'Machines Espresso', href: '/' },
+      // { name: 'Machines Automatiques', href: '/' },
+      // { name: 'Accessoires', href: '/accessories' },
+      // { name: 'Promotions', href: '/promotions' },
     ],
     support: [
-      { name: 'Centre d\'aide', href: '/help' },
-      { name: 'Contact', href: '/contact' },
-      { name: 'Garantie', href: '/warranty' },
-      { name: 'Réparations', href: '/repairs' },
+      { name: 'Centre d\'aide', href: '/' },
+      { name: 'Contact', href: '/' },
+      // { name: 'Garantie', href: '/warranty' },
+      // { name: 'Réparations', href: '/repairs' },
     ],
     company: [
       { name: 'À propos', href: '/about' },
-      { name: 'Notre histoire', href: '/story' },
-      { name: 'Carrières', href: '/careers' },
-      { name: 'Presse', href: '/press' },
+      // { name: 'Notre histoire', href: '/story' },
+      // { name: 'Carrières', href: '/careers' },
+      // { name: 'Presse', href: '/press' },
     ],
     legal: [
-      { name: 'Conditions d\'utilisation', href: '/terms' },
-      { name: 'Politique de confidentialité', href: '/privacy' },
-      { name: 'Mentions légales', href: '/legal' },
-      { name: 'Cookies', href: '/cookies' },
+      { name: 'Conditions d\'utilisation', href: '/' },
+      { name: 'Politique de confidentialité', href: '/' },
+      // { name: 'Mentions légales', href: '/legal' },
+      // { name: 'Cookies', href: '/cookies' },
     ],
   };
 

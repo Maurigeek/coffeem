@@ -1,15 +1,18 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { dataService } from '../dataService';
 import { useToast } from '@/hooks/use-toast';
+import { useLocation } from 'wouter';
 
+/** Liste enrichie du panier */
 export function useCart() {
   return useQuery({
     queryKey: ['cart'],
     queryFn: () => dataService.getCart(),
-    staleTime: 0, // Always fetch fresh cart data
+    staleTime: 0,
   });
 }
 
+/** Nombre d’articles total */
 export function useCartCount() {
   return useQuery({
     queryKey: ['cart-count'],
@@ -18,6 +21,7 @@ export function useCartCount() {
   });
 }
 
+/** Total TTC (selon règles du service) */
 export function useCartTotal() {
   return useQuery({
     queryKey: ['cart-total'],
@@ -26,35 +30,36 @@ export function useCartTotal() {
   });
 }
 
+/** Ajouter un produit */
 export function useAddToCart() {
   const queryClient = useQueryClient();
   const { toast } = useToast();
+  const [, navigate] = useLocation();
 
   return useMutation({
     mutationFn: ({ productId, quantity = 1 }: { productId: string; quantity?: number }) =>
       dataService.addToCart(productId, quantity),
-    onSuccess: (updatedCart, variables) => {
-      // Invalide toutes les queries liées au panier
+    onSuccess: (_updatedCart, variables) => {
       queryClient.invalidateQueries({ queryKey: ['cart'] });
       queryClient.invalidateQueries({ queryKey: ['cart-count'] });
       queryClient.invalidateQueries({ queryKey: ['cart-total'] });
-      
       toast({
-        title: "Produit ajouté au panier",
-        description: `${variables.quantity} article(s) ajouté(s) avec succès.`,
+        title: 'Produit ajouté',
+        description: `${variables.quantity ?? 1} article(s) ajouté(s) au panier.`,
         duration: 2000,
       });
     },
-    onError: (error) => {
+    onError: () => {
       toast({
-        title: "Erreur",
+        title: 'Erreur',
         description: "Impossible d'ajouter le produit au panier.",
-        variant: "destructive",
+        variant: 'destructive',
       });
     },
   });
 }
 
+/** Mettre à jour la quantité */
 export function useUpdateCartItem() {
   const queryClient = useQueryClient();
   const { toast } = useToast();
@@ -69,14 +74,15 @@ export function useUpdateCartItem() {
     },
     onError: () => {
       toast({
-        title: "Erreur",
-        description: "Impossible de mettre à jour le panier.",
-        variant: "destructive",
+        title: 'Erreur',
+        description: 'Mise à jour du panier impossible.',
+        variant: 'destructive',
       });
     },
   });
 }
 
+/** Retirer une ligne */
 export function useRemoveFromCart() {
   const queryClient = useQueryClient();
   const { toast } = useToast();
@@ -87,23 +93,23 @@ export function useRemoveFromCart() {
       queryClient.invalidateQueries({ queryKey: ['cart'] });
       queryClient.invalidateQueries({ queryKey: ['cart-count'] });
       queryClient.invalidateQueries({ queryKey: ['cart-total'] });
-      
       toast({
-        title: "Produit retiré",
-        description: "Le produit a été retiré du panier.",
+        title: 'Produit retiré',
+        description: 'Le produit a été retiré du panier.',
         duration: 2000,
       });
     },
     onError: () => {
       toast({
-        title: "Erreur",
-        description: "Impossible de retirer le produit du panier.",
-        variant: "destructive",
+        title: 'Erreur',
+        description: 'Impossible de retirer ce produit.',
+        variant: 'destructive',
       });
     },
   });
 }
 
+/** Vider le panier */
 export function useClearCart() {
   const queryClient = useQueryClient();
   const { toast } = useToast();
@@ -114,11 +120,7 @@ export function useClearCart() {
       queryClient.invalidateQueries({ queryKey: ['cart'] });
       queryClient.invalidateQueries({ queryKey: ['cart-count'] });
       queryClient.invalidateQueries({ queryKey: ['cart-total'] });
-      
-      toast({
-        title: "Panier vidé",
-        description: "Tous les produits ont été retirés du panier.",
-      });
+      toast({ title: 'Panier vidé', description: 'Tous les produits ont été retirés.' });
     },
   });
 }
