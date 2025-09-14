@@ -250,7 +250,7 @@ export default function Checkout() {
                 {message && <div className="text-sm text-red-500">{message}</div>}
 
                 <Button type="submit" className="w-full" disabled={paying}>
-                  {paying ? 'Traitement…' : 'Payer par carte'}
+                  {paying ? 'Traitement…' : 'Payer'}
                 </Button>
                 {/* <p className="text-xs text-muted-foreground mt-2 flex items-center gap-2">
                   <Shield className="w-3 h-3" /> Démo 100% front-end — aucun back-end requis
