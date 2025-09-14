@@ -154,7 +154,7 @@ export default function ProductCard({
           {name}
         </h3>
 
-        <div className="flex items-center justify-between mb-3">
+        <div className="flex  flex-col items-center justify-between mb-3">
           <span className="text-2xl font-bold text-primary" data-testid={`text-price-${id}`}>
             {formatPrice(price)}
           </span>

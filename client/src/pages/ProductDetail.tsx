@@ -56,11 +56,11 @@ export default function ProductDetail() {
         <div className="space-y-4">
           {/* ✅ on n’accède plus à product.* tant qu’on ne l’a pas validé ci-dessus */}
           <ProductZoom src={product.image} alt={product.name} />
-          {product.media360?.length ? (
+          {/* {product.media360?.length ? (
             <div className="mt-4">
               <Product360 frames={product.media360} className="aspect-[4/3] bg-black/20" />
             </div>
-          ) : null}
+          ) : null} */}
           <div className="text-sm text-muted-foreground text-center">
             Passez la souris sur l'image pour zoomer
           </div>
@@ -68,9 +68,9 @@ export default function ProductDetail() {
 
         {/* Infos */}
         <div className="space-y-6">
-          <div className="text-sm text-muted-foreground">
+          {/* <div className="text-sm text-muted-foreground">
             <span>Accueil</span> / <span>{product.category}</span> / <span>{product.name}</span>
-          </div>
+          </div> */}
 
           <h1 className="text-3xl font-serif font-bold">{product.name}</h1>
 
@@ -172,7 +172,7 @@ export default function ProductDetail() {
       </div>
 
       {/* Détails */}
-      <div className="mt-16">
+      <div className="mt-10">
         <div className="space-y-8">
           <div>
             <h3 className="text-2xl font-serif font-bold mb-6">Caractéristiques</h3>
